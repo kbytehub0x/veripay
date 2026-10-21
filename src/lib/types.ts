@@ -1,0 +1,90 @@
+export type ContractStatus = 'active' | 'completed' | 'disputed';
+
+export type MilestoneStatus = 
+  | 'pending_funding'
+  | 'funded_in_escrow'
+  | 'evidence_submitted'
+  | 'verifying'
+  | 'verified_auto_released'
+  | 'verified_awaiting_approval'
+  | 'remediation_needed'
+  | 'disbursed';
+
+export interface MilestoneEvidence {
+  submittedAt: string;
+  prUrl?: string;
+  commitHash?: string;
+  gitDiff?: string;
+  testLogs?: string;
+  testPassedCount?: number;
+  testFailedCount?: number;
+  coveragePercent?: number;
+  notes?: string;
+  deliverableUrls?: string[];
+}
+
+export interface CriterionAuditResult {
+  criterion: string;
+  satisfied: boolean;
+  score: number; // 0 - 100
+  evidenceSnippet?: string;
+  explanation: string;
+}
+
+export interface VerificationAudit {
+  analyzedAt: string;
+  confidenceScore: number; // 0 - 100
+  verdict: 'APPROVED_AUTO_PAYOUT' | 'REQUIRES_CLIENT_APPROVAL' | 'REMEDIATION_REQUIRED';
+  rationale: string;
+  criteriaResults: CriterionAuditResult[];
+  remediationPunchlist?: string[];
+  policyEvaluation: {
+    autoReleaseEligible: boolean;
+    reason: string;
+    thresholdApplied: number;
+  };
+}
+
+export interface Milestone {
+  id: string;
+  contractId: string;
+  title: string;
+  description: string;
+  amount: number;
+  dueDate: string;
+  acceptanceCriteria: string[];
+  status: MilestoneStatus;
+  evidence?: MilestoneEvidence;
+  audit?: VerificationAudit;
+  paypalOrderId?: string;
+  paypalPayoutBatchId?: string;
+  paypalPayoutItemId?: string;
+  payoutTransactionId?: string;
+  disbursedAt?: string;
+}
+
+export interface Contract {
+  id: string;
+  title: string;
+  description: string;
+  client: {
+    name: string;
+    email: string;
+    paypalEmail: string;
+    company?: string;
+  };
+  contractor: {
+    name: string;
+    email: string;
+    paypalEmail: string;
+  };
+  totalAmount: number;
+  fundedEscrowAmount: number;
+  disbursedAmount: number;
+  currency: 'USD' | 'EUR' | 'GBP';
+  autoReleaseThreshold: number; // Max amount auto-releasable without human click
+  minConfidenceScore: number;   // Min score (e.g. 90%) for auto-release
+  status: ContractStatus;
+  createdAt: string;
+  milestones: Milestone[];
+}
