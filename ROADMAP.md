@@ -2,36 +2,39 @@
 
 ## Overview
 * **Hackathon:** [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/) on Devpost
-* **Goal:** **Category Prize / Podium** ($67,500+ total prize pool)
-* **Phase:** **Phase 3 of 3 (Background Ideation $\rightarrow$ Sprint Oct 27 – Nov 12)**
-* **Official Submission Deadline:** November 12, 2026
+* **Project Name:** **VeriPay** — Autonomous Evidence-Gated Milestone Escrow & Payout Agent
+* **Goal:** **Grand Prize ($12,000)** / **Best Use of Agentic Commerce ($5,000)** / **AG Grid Partner Prize**
+* **Submission Deadline:** November 12, 2026 at 12:00 PM PST
 
 ---
 
-## Master 3-Hackathon Roadmap
-1. 🎯 **Phase 1: Build with AI: Basics** (Oct 6 – Oct 13)
-2. 🚀 **Phase 2: Life After Code (GitLab)** (Oct 13 – Oct 27)
-3. 💳 **Phase 3: PayPal AI Hackathon** (Oct 27 – Nov 12) — *Final sprint*
+## Architecture & Technology Stack
+* **Framework:** Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS
+* **Data Matrix:** AG Grid Community (`ag-grid-react`)
+* **Payment Rails:** PayPal Sandbox REST APIs (Orders v2 API, Payouts API, Invoicing API, Webhooks)
+* **Agent Engine:** VeriAgent (Google Gemini + AST/Test Heuristic Auditor + Policy Firewall)
 
 ---
 
-## What the Hackathon is About
-* **Theme:** Integrating **PayPal Sandbox APIs** with **AI Capabilities** (especially Agentic Commerce).
-* **Target Prize Categories:**
-  * Best Use of Agentic Commerce ($5,000)
-  * PayPal + AI General Track ($5,000)
-  * Grand Prize ($12,000) or Partner Tracks (AG Grid, Render, APIMatic, etc.)
-* **Core Requirements:**
-  * Must integrate PayPal (orders/checkout/invoicing/payouts sandbox).
-  * Must utilize AI in a meaningful way.
-  * Public GitHub repository.
-  * Functional working application.
-  * Demo video (< 3 minutes).
+## Action Plan & Delivery Status
 
----
-
-## Action Plan
-- [ ] **Oct 6 – Oct 26 (Free Time):** Passive ideation (e.g., AI procurement bot, autonomous negotiation & checkout agent, smart freelance billing agent).
-- [ ] **Oct 27 – Nov 2:** Set up PayPal developer sandbox, build backend agent & payment integration.
-- [ ] **Nov 3 – Nov 8:** Build user interface and agent transaction safeguards/confirmations.
-- [ ] **Nov 9 – Nov 12:** Polish edge cases, record demo video, complete Devpost submission.
+- [x] **Phase 1: Intel Gathering & Hackathon Analysis (Oct 21, 2026)**
+  - Mapped competitive landscape (17k+ builders, popular patterns, agent firewalls vs simple chat bots).
+  - Selected winning concept: **VeriPay (Evidence-Gated Autonomous Escrow)**.
+- [x] **Phase 2: Project Scaffolding & Core Architecture (Oct 21, 2026)**
+  - Initialized dedicated standalone git repository in `/home/ghost/Documents/payPAL`.
+  - Configured Next.js 14, Tailwind, AG Grid, Lucide, and TypeScript.
+  - Implemented PayPal API engine (`createEscrowOrder`, `captureEscrowOrder`, `executeContractorPayout`).
+  - Built VeriAgent AI reasoning and Zero-Trust Policy Firewall (3-tier security architecture).
+  - Implemented API route handlers for contracts, verification, PayPal orders, and payouts.
+  - Built full interactive UI: AG Grid Milestone Matrix, Escrow Deposit Modal, Evidence Submission Modal with 1-click test presets, and AI Audit Dossier Visualizer.
+  - Verified production build (`npm run build` compiled cleanly).
+- [ ] **Phase 3: Live PayPal Developer Sandbox Pairing (Oct 22 – Oct 27, 2026)**
+  - Plug in user's personal PayPal Developer Sandbox Client ID and Secret in `.env.local`.
+  - Validate end-to-end sandbox payout item generation and live sandbox buyer checkout.
+- [ ] **Phase 4: Devpost Submission Assets & Video Production (Oct 28 – Nov 5, 2026)**
+  - Record < 3 minute YouTube walkthrough based on `README.md` demo script.
+  - Take high-resolution screenshots of AG Grid ledger and AI audit dossier for Devpost gallery.
+  - Create public GitHub repository and push code.
+- [ ] **Phase 5: Final Submission (Before Nov 12, 2026)**
+  - Submit on Devpost before the 12:00 PM PST deadline.
