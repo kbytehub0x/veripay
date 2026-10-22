@@ -29,3 +29,7 @@ yarn-error.log*
 .vercel
 .vscode/
 .idea/
+
+# Local notes, roadmap & hackathon strategy
+ROADMAP.md
+*.local.md
