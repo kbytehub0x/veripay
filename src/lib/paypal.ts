@@ -282,7 +282,7 @@ export async function executeContractorPayout(params: {
 }
 
 /**
- * Create a compliant PayPal Invoice record for tax & accounting reconciliation
+ * Create a PayPal Invoice record for milestone accounting reconciliation
  */
 export async function generateMilestoneInvoice(params: {
   milestoneId: string;

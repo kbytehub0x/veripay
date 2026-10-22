@@ -45,17 +45,22 @@ flowchart TD
         G -->|"Tier 3: <70%"| J["Remediation Punchlist (Escrow Locked)"]
         I -->|"Approved"| H
         H --> K["Contractor PayPal Balance"]
-        H --> L["PayPal Invoicing / Tax Reconciliation"]
+        H --> L["PayPal Invoicing / Milestone Records"]
     end
 ```
 
 ---
 
-## 🏆 Hackathon Tracks & Prize Alignment
+## 🤖 Why VeriPay Fits Agentic Commerce
 
-* 🥇 **Best Use of Agentic Commerce ($5,000):** Autonomous financial agency where AI reasons over deliverables and directly commands PayPal payment rails under strict policy guardrails.
-* 💳 **PayPal + AI General Track ($5,000 / $12,000 Grand Prize):** Deep dual integration of PayPal Orders v2, PayPal Payouts API, and Webhooks with AI verification.
-* 📊 **AG Grid Partner Prize:** Enterprise milestone matrix with custom status renderers, sorting, quick filters, and CSV audit export powered by `ag-grid-react`.
+> **Goal:** Deliver a polished, end-to-end PayPal Sandbox and AI-verified milestone escrow experience. Primary award target: PayPal AI Hackathon Grand Prize. Secondary award target: Best Use of Agentic Commerce.
+
+VeriPay is designed for autonomous commerce: an AI agent evaluates deliverables and executes policy-gated PayPal payment actions.
+
+* **Autonomous Financial Agency:** Rather than acting as a passive chatbot that outputs static payment links, VeriAgent reasons over real-world artifacts (git diffs, test logs, OpenAPI schemas) and autonomously commands PayPal payment rails.
+* **Dual PayPal Payment Rail:** Integrates inbound escrow deposits (**PayPal Orders v2 API**) with autonomous contractor disbursements (**PayPal Payouts REST API**) and automated milestone records (**PayPal Invoicing API**).
+* **Zero-Trust Policy Firewall:** Decouples AI reasoning from payment execution with deterministic thresholds: autonomous release for high-confidence deliverables below policy limits, and seamless 1-click human-in-the-loop escalation for high-value contracts.
+* **Enterprise Audit Matrix:** Powered by **AG Grid** for real-time milestone tracking, confidence ratings, and PayPal rail receipts with CSV audit exports.
 
 ---
 
@@ -77,7 +82,7 @@ flowchart TD
 ### 2. Clone & Install
 ```bash
 git clone <your-repo-url>
-cd payPAL
+cd veripay
 npm install
 ```
 
@@ -104,13 +109,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🎬 3-Minute Demo Script (For Video Submission)
+## 🎬 3-Minute Demo Video Walkthrough Script
 
-1. **The Hook (0:00 - 0:35):** Show the contract dashboard. Highlight the friction of freelance escrow and Upwork 10% rakes. Introduce VeriPay: autonomous milestone verification.
-2. **Inbound Funding via PayPal (0:35 - 1:15):** Click "Fund Escrow" on Milestone 3. Show the PayPal Escrow deposit modal, explain Orders v2, and watch the escrow vault update.
-3. **Autonomous AI Verification (1:15 - 2:05):** Select Milestone 2. Open "Submit Evidence" and select the **High Quality Preset**. Click "Submit & Trigger AI Verification". Show VeriAgent analyzing PR diffs, running tests (94% coverage), achieving a 96% confidence score, and instantly triggering the **PayPal Payouts API** to deposit funds into the contractor's PayPal email.
-4. **Guardrail Edge Cases (2:05 - 2:40):** Show the **High Value Preset** ($650 > $500 ceiling) triggering **Tier 2 Human-in-the-Loop 1-Click Release**, and the **Failing Tests Preset** generating an actionable remediation punchlist.
-5. **Conclusion (2:40 - 3:00):** Show AG Grid CSV export, summary of prize tracks, and wrap up.
+1. **The Workflow & Problem (0:00 - 0:20):** Jump directly into the live VeriPay dashboard. Point out the core contract: client funds escrow, contractor submits deliverables, and VeriAgent verifies work before releasing funds.
+2. **Inbound Funding via PayPal Orders v2 (0:20 - 0:55):** Click "Fund Escrow" on Milestone 3. Show the PayPal Escrow deposit modal, trigger capture via PayPal Orders v2 API, and show the escrow vault updated in real time.
+3. **Contractor Evidence Submission & AI Verification (0:55 - 1:50):** Select Milestone 2. Open "Submit Evidence" and select the High Quality scenario (PR #48, 34/34 tests passing, 94.2% coverage). Click "Submit & Trigger AI Verification". Watch VeriAgent audit the code, display confidence scoring (96%), pass policy guardrails, and execute an immediate disbursement via **PayPal Payouts REST API** (`/v1/payments/payouts`) with transaction receipt ID.
+4. **Policy Guardrail Edge Cases (1:50 - 2:35):** Show the Tier 2 high-value threshold escalation ($650 > $500 ceiling requires 1-click client signoff) and Tier 3 failing test scenario (locks escrow, generates actionable remediation punchlist).
+5. **Milestone Invoice & AG Grid Audit (2:35 - 3:00):** Open the generated PayPal Invoice record for milestone settlement, demonstrate the AG Grid ledger with CSV export, and summarize the autonomous architecture.
 
 ---
 

@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const itemId = item?.payout_item_id || `PI-${Date.now()}`;
     const txId = item?.transaction_id || `TX-PP-${Date.now()}`;
 
-    // Generate compliant tax invoice
+    // Generate milestone invoice record
     const invoice = await generateMilestoneInvoice({
       milestoneId: milestone.id,
       contractId: contract.id,

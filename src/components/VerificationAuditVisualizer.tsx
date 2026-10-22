@@ -349,7 +349,7 @@ export const VerificationAuditVisualizer: React.FC<VerificationAuditVisualizerPr
                   {/* View Invoice Button */}
                   <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
                     <div>
-                      <div className="font-bold text-slate-900 text-xs">Compliant Tax Invoicing Receipt</div>
+                      <div className="font-bold text-slate-900 text-xs">PayPal Invoicing & Settlement Record</div>
                       <div className="text-slate-500 text-[11px] mt-0.5">
                         Generated automatically via PayPal Invoicing API v2 ({milestone.invoice?.invoiceNumber || 'INV2-VP-K49F2L'})
                       </div>

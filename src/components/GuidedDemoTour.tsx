@@ -83,7 +83,7 @@ export const GuidedDemoTour: React.FC<GuidedDemoTourProps> = ({ onTriggerStep })
             </div>
             <div className="overflow-hidden">
               <div className="text-[10px] uppercase font-bold text-amber-200">Step 4</div>
-              <div className="text-[11px] font-semibold text-white truncate">Tax Invoice</div>
+              <div className="text-[11px] font-semibold text-white truncate">Milestone Invoice</div>
             </div>
           </button>
 

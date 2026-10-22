@@ -237,7 +237,7 @@ export const MilestoneLedgerAGGrid: React.FC<MilestoneLedgerAGGridProps> = ({
           <button
             onClick={() => onViewInvoice && onViewInvoice(m)}
             className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-[#0070BA] text-xs font-semibold rounded-lg transition border border-blue-200"
-            title="View PayPal Invoicing Tax Receipt"
+            title="View PayPal Milestone Invoice Record"
           >
             <Receipt className="w-3.5 h-3.5" />
             <span>Invoice</span>

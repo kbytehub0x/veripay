@@ -123,11 +123,11 @@ export default function Dashboard() {
         showToast('Step 2 & 3: Submit PR & Test Suite. Use Demo Presets for instant AI audit!', 'info');
       }
     } else if (stepNumber === 4) {
-      // Step 4: View Tax Invoice on disbursed milestone
+      // Step 4: View PayPal Invoice on disbursed milestone
       const disbursed = activeContract.milestones.find(m => m.status === 'disbursed') || activeContract.milestones[0];
       if (disbursed) {
         setInvoiceMilestone(disbursed);
-        showToast('Step 4: View compliant PayPal Invoicing tax receipt.', 'success');
+        showToast('Step 4: View PayPal Invoicing milestone settlement record.', 'success');
       }
     }
   };
