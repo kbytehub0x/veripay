@@ -5,10 +5,12 @@ import { Contract, Milestone } from '@/lib/types';
 import { Navbar } from '@/components/Navbar';
 import { ContractHeader } from '@/components/ContractHeader';
 import { GuardrailPolicyCard } from '@/components/GuardrailPolicyCard';
+import { GuidedDemoTour } from '@/components/GuidedDemoTour';
 import { MilestoneLedgerAGGrid } from '@/components/MilestoneLedgerAGGrid';
 import { EscrowFundingModal } from '@/components/EscrowFundingModal';
 import { EvidenceSubmissionModal } from '@/components/EvidenceSubmissionModal';
 import { VerificationAuditVisualizer } from '@/components/VerificationAuditVisualizer';
+import { InvoiceReceiptModal } from '@/components/InvoiceReceiptModal';
 import { CreateContractModal } from '@/components/CreateContractModal';
 import { ShieldCheck, Zap, AlertCircle, CheckCircle2, ChevronRight, Lock } from 'lucide-react';
 
@@ -23,6 +25,7 @@ export default function Dashboard() {
   const [fundingMilestone, setFundingMilestone] = useState<Milestone | null>(null);
   const [evidenceMilestone, setEvidenceMilestone] = useState<Milestone | null>(null);
   const [auditMilestone, setAuditMilestone] = useState<Milestone | null>(null);
+  const [invoiceMilestone, setInvoiceMilestone] = useState<Milestone | null>(null);
   const [isCreateContractOpen, setIsCreateContractOpen] = useState(false);
 
   // Toast notification
@@ -102,10 +105,36 @@ export default function Dashboard() {
     }
   };
 
+  const handleTriggerTourStep = (stepNumber: 1 | 2 | 3 | 4) => {
+    if (!activeContract) return;
+
+    if (stepNumber === 1) {
+      // Step 1: Fund Escrow on pending milestone
+      const pending = activeContract.milestones.find(m => m.status === 'pending_funding') || activeContract.milestones[2];
+      if (pending) {
+        setFundingMilestone(pending);
+        showToast('Step 1: Deposit funds into PayPal Escrow Vault.', 'info');
+      }
+    } else if (stepNumber === 2 || stepNumber === 3) {
+      // Step 2 & 3: Submit Evidence on funded milestone
+      const funded = activeContract.milestones.find(m => m.status === 'funded_in_escrow') || activeContract.milestones[1];
+      if (funded) {
+        setEvidenceMilestone(funded);
+        showToast('Step 2 & 3: Submit PR & Test Suite. Use Demo Presets for instant AI audit!', 'info');
+      }
+    } else if (stepNumber === 4) {
+      // Step 4: View Tax Invoice on disbursed milestone
+      const disbursed = activeContract.milestones.find(m => m.status === 'disbursed') || activeContract.milestones[0];
+      if (disbursed) {
+        setInvoiceMilestone(disbursed);
+        showToast('Step 4: View compliant PayPal Invoicing tax receipt.', 'success');
+      }
+    }
+  };
+
   const handleResetDemo = async () => {
     setIsResetting(true);
     try {
-      // Re-trigger contracts load or reload window
       window.location.reload();
     } finally {
       setIsResetting(false);
@@ -152,8 +181,11 @@ export default function Dashboard() {
       )}
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         
+        {/* Judge Interactive Quick Tour */}
+        <GuidedDemoTour onTriggerStep={handleTriggerTourStep} />
+
         {/* Multi-Contract Switcher (if multiple exist) */}
         {contracts.length > 1 && (
           <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 text-xs">
@@ -189,6 +221,7 @@ export default function Dashboard() {
               onSubmitEvidence={(m) => setEvidenceMilestone(m)}
               onViewAudit={(m) => setAuditMilestone(m)}
               onApprovePayout={handleApprovePayout}
+              onViewInvoice={(m) => setInvoiceMilestone(m)}
               isProcessing={isProcessing}
             />
 
@@ -199,14 +232,14 @@ export default function Dashboard() {
                   <Lock className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-semibold text-slate-800">VeriPay End-to-End Payment Rail</div>
-                  <div>PayPal Orders v2 (Escrow Deposit) $\rightarrow$ VeriAgent AI Verification $\rightarrow$ PayPal Payouts API (Instant Disbursement)</div>
+                  <div className="font-semibold text-slate-800">VeriPay Dual PayPal Payment Rail</div>
+                  <div>PayPal Orders v2 (Escrow Deposit) $\rightarrow$ VeriAgent AI Verification $\rightarrow$ PayPal Payouts API (Instant Settlement) $\rightarrow$ Invoicing API</div>
                 </div>
               </div>
 
               <div className="flex items-center gap-4 text-[11px]">
-                <span className="font-mono bg-slate-100 px-2.5 py-1 rounded-md text-slate-700">Next.js 14 + AG Grid + TypeScript</span>
-                <span className="font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md">PayPal Sandbox Ready</span>
+                <span className="font-mono bg-slate-100 px-2.5 py-1 rounded-md text-slate-700">Next.js 14 + AG Grid + Render</span>
+                <span className="font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md">PayPal Sandbox Connected</span>
               </div>
             </div>
           </>
@@ -248,7 +281,18 @@ export default function Dashboard() {
         contract={activeContract}
         onClose={() => setAuditMilestone(null)}
         onApprovePayout={handleApprovePayout}
+        onViewInvoice={(m) => {
+          setAuditMilestone(null);
+          setInvoiceMilestone(m);
+        }}
         isProcessing={isProcessing}
+      />
+
+      <InvoiceReceiptModal
+        isOpen={!!invoiceMilestone}
+        milestone={invoiceMilestone}
+        contract={activeContract}
+        onClose={() => setInvoiceMilestone(null)}
       />
 
       <CreateContractModal

@@ -31,6 +31,32 @@ export interface CriterionAuditResult {
   explanation: string;
 }
 
+export interface AgentTraceLog {
+  timestamp: string;
+  step: string;
+  status: 'info' | 'success' | 'warning' | 'error';
+  details?: string;
+}
+
+export interface MilestoneInvoice {
+  invoiceId: string;
+  invoiceNumber: string;
+  status: 'PAID' | 'SENT' | 'DRAFT';
+  amount: number;
+  currency: string;
+  createdAt: string;
+  paidAt?: string;
+  pdfUrl?: string;
+}
+
+export interface DisputeMessage {
+  id: string;
+  sender: 'client' | 'contractor' | 'agent';
+  senderName: string;
+  message: string;
+  timestamp: string;
+}
+
 export interface VerificationAudit {
   analyzedAt: string;
   confidenceScore: number; // 0 - 100
@@ -43,6 +69,7 @@ export interface VerificationAudit {
     reason: string;
     thresholdApplied: number;
   };
+  agentLogs?: AgentTraceLog[];
 }
 
 export interface Milestone {
@@ -61,6 +88,8 @@ export interface Milestone {
   paypalPayoutItemId?: string;
   payoutTransactionId?: string;
   disbursedAt?: string;
+  invoice?: MilestoneInvoice;
+  disputeMessages?: DisputeMessage[];
 }
 
 export interface Contract {

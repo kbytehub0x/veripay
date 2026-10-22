@@ -1,4 +1,4 @@
-import { Milestone, MilestoneEvidence, VerificationAudit, CriterionAuditResult } from './types';
+import { Milestone, MilestoneEvidence, VerificationAudit, CriterionAuditResult, AgentTraceLog } from './types';
 
 /**
  * Evaluates submitted milestone evidence against acceptance criteria.
@@ -165,6 +165,51 @@ function evaluateWithHeuristicEngine(
     policyReason = `Confidence score (${compositeConfidence}%) below acceptable threshold (70%). Remediation punchlist generated for contractor. Escrow remains secured in vault.`;
   }
 
+  const now = () => new Date().toISOString();
+  const agentLogs: AgentTraceLog[] = [
+    {
+      timestamp: now(),
+      step: 'Evidence Ingestion',
+      status: 'info',
+      details: `Received PR ${evidence.prUrl || 'N/A'} (commit: ${evidence.commitHash || 'HEAD'}) with ${passed + failed} test assertions and ${coverage}% coverage.`
+    },
+    {
+      timestamp: now(),
+      step: 'AST & Code Analysis',
+      status: 'info',
+      details: `Parsed git diff (${diff.length} bytes). Evaluated exports, controller endpoints, and middleware changes.`
+    },
+    {
+      timestamp: now(),
+      step: 'Test Suite Inspection',
+      status: failed === 0 ? 'success' : 'warning',
+      details: failed === 0 
+        ? `Clean test run: ${passed} passing assertions with ${coverage}% statement coverage.`
+        : `Detected ${failed} test failure(s) requiring remediation.`
+    },
+    ...criteriaResults.map(cr => ({
+      timestamp: now(),
+      step: `Checkpoint: ${cr.criterion.slice(0, 32)}...`,
+      status: (cr.satisfied ? 'success' : 'warning') as 'success' | 'warning',
+      details: `Score: ${cr.score}% — ${cr.explanation}`
+    })),
+    {
+      timestamp: now(),
+      step: 'Policy Firewall Guardrail Check',
+      status: isAutoEligible ? 'success' : (compositeConfidence >= 70 ? 'warning' : 'error'),
+      details: policyReason
+    }
+  ];
+
+  if (isAutoEligible) {
+    agentLogs.push({
+      timestamp: now(),
+      step: 'Autonomous Payout Command',
+      status: 'success',
+      details: `Auto-disbursing $${milestone.amount} via PayPal Payouts API (/v1/payments/payouts) to contractor.`
+    });
+  }
+
   return {
     analyzedAt: new Date().toISOString(),
     confidenceScore: compositeConfidence,
@@ -176,7 +221,8 @@ function evaluateWithHeuristicEngine(
       autoReleaseEligible: isAutoEligible,
       reason: policyReason,
       thresholdApplied: autoReleaseThreshold,
-    }
+    },
+    agentLogs,
   };
 }
 
@@ -254,6 +300,30 @@ Return ONLY a JSON object with this exact structure:
       ? 'REQUIRES_CLIENT_APPROVAL' 
       : 'REMEDIATION_REQUIRED';
 
+  const now = () => new Date().toISOString();
+  const agentLogs: AgentTraceLog[] = [
+    {
+      timestamp: now(),
+      step: 'Gemini LLM Verification Ingestion',
+      status: 'info',
+      details: `Prompted gemini-1.5-flash with contractual acceptance criteria and evidence bundle.`
+    },
+    {
+      timestamp: now(),
+      step: 'Autonomous Criteria Synthesis',
+      status: 'info',
+      details: `Gemini verified ${parsed.criteriaResults?.length || 0} checkpoints with rationale: ${parsed.rationale?.slice(0, 80)}...`
+    },
+    {
+      timestamp: now(),
+      step: 'Policy Firewall Check',
+      status: isAutoEligible ? 'success' : 'warning',
+      details: isAutoEligible 
+        ? `Passed all criteria with score ${parsed.confidenceScore}% <= $${autoReleaseThreshold} threshold.`
+        : `Policy threshold requires client confirmation or remediation.`
+    }
+  ];
+
   return {
     analyzedAt: new Date().toISOString(),
     confidenceScore: parsed.confidenceScore,
@@ -267,6 +337,7 @@ Return ONLY a JSON object with this exact structure:
         ? `Confidence of ${parsed.confidenceScore}% meets policy ceiling and passes all checks.`
         : `Autonomous release withheld by policy guardrails. Review or punchlist required.`,
       thresholdApplied: autoReleaseThreshold
-    }
+    },
+    agentLogs
   };
 }

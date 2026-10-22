@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getContractById, submitMilestoneEvidence, recordMilestoneAudit, recordMilestonePayout } from '@/lib/store';
 import { runVerificationAgent } from '@/lib/agent';
-import { executeContractorPayout } from '@/lib/paypal';
+import { executeContractorPayout, generateMilestoneInvoice } from '@/lib/paypal';
 
 export async function POST(request: Request) {
   try {
@@ -57,10 +57,24 @@ export async function POST(request: Request) {
         const itemId = item?.payout_item_id || `PI-${Date.now()}`;
         const txId = item?.transaction_id || `TX-PP-${Date.now()}`;
 
+        const invoice = await generateMilestoneInvoice({
+          milestoneId: milestone.id,
+          contractId: contract.id,
+          clientName: contract.client.name,
+          clientEmail: contract.client.email,
+          contractorName: contract.contractor.name,
+          contractorEmail: contract.contractor.paypalEmail,
+          amount: milestone.amount,
+          currency: contract.currency,
+          milestoneTitle: milestone.title,
+          transactionId: txId,
+        });
+
         recordMilestonePayout(contractId, milestoneId, {
           batchId,
           itemId,
           transactionId: txId,
+          invoice,
         });
 
         payoutResult = {
@@ -69,6 +83,7 @@ export async function POST(request: Request) {
           transactionId: txId,
           status: 'SUCCESS',
           amount: milestone.amount,
+          invoice,
         };
       } catch (payoutErr: any) {
         console.error('PayPal Payout execution error:', payoutErr);

@@ -1,4 +1,4 @@
-import { Contract, Milestone, MilestoneEvidence, VerificationAudit } from './types';
+import { Contract, Milestone, MilestoneEvidence, VerificationAudit, MilestoneInvoice, DisputeMessage } from './types';
 
 // Initial Demo Contracts showcasing different states:
 // - Auto-disbursed milestone with real PayPal transaction ID
@@ -92,13 +92,55 @@ const INITIAL_CONTRACTS: Contract[] = [
             autoReleaseEligible: true,
             reason: 'Confidence score of 96% meets the 90% threshold, and amount ($400) is within the $500 autonomous release ceiling.',
             thresholdApplied: 500
-          }
+          },
+          agentLogs: [
+            {
+              timestamp: '2026-10-19T10:14:23Z',
+              step: 'Evidence Ingestion',
+              status: 'info',
+              details: 'Received PR #42 (commit: 7b9e12a) with 28 unit tests and 92% coverage.'
+            },
+            {
+              timestamp: '2026-10-19T10:14:35Z',
+              step: 'AST & Code Analysis',
+              status: 'info',
+              details: 'Found signTokens & verifyRefreshToken in git diff. JWT expiration configured to 15m.'
+            },
+            {
+              timestamp: '2026-10-19T10:14:50Z',
+              step: 'Test Suite Inspection',
+              status: 'success',
+              details: 'Clean test run: 28 passing assertions, 0 failed, 92% coverage.'
+            },
+            {
+              timestamp: '2026-10-19T10:15:02Z',
+              step: 'Policy Firewall Guardrail Check',
+              status: 'success',
+              details: 'Score 96% >= 90% and $400 <= $500 threshold. Auto-release approved.'
+            },
+            {
+              timestamp: '2026-10-19T10:15:08Z',
+              step: 'Autonomous Payout Command',
+              status: 'success',
+              details: 'Triggered PayPal Payouts API (/v1/payments/payouts). Batch ID: VP-BATCH-K49F2L.'
+            }
+          ]
         },
         paypalOrderId: 'ORD-SB-981247-FUNDED',
         paypalPayoutBatchId: 'VP-BATCH-K49F2L',
         paypalPayoutItemId: 'PI-SANDBOX-7889',
         payoutTransactionId: 'TX-PAYPAL-982319084',
         disbursedAt: '2026-10-19T10:15:10Z',
+        invoice: {
+          invoiceId: 'INV-VP-98124',
+          invoiceNumber: 'INV2-VP-K49F2L',
+          status: 'PAID',
+          amount: 400,
+          currency: 'USD',
+          createdAt: '2026-10-19T10:15:12Z',
+          paidAt: '2026-10-19T10:15:15Z',
+          pdfUrl: 'https://www.sandbox.paypal.com/invoice/p/#INV2-VP-K49F2L',
+        },
       },
       {
         id: 'ms_02_analytics',
@@ -228,6 +270,7 @@ export function recordMilestonePayout(
     batchId: string;
     itemId: string;
     transactionId: string;
+    invoice?: MilestoneInvoice;
   }
 ): Milestone | null {
   const contract = getContractById(contractId);
@@ -241,6 +284,9 @@ export function recordMilestonePayout(
   milestone.paypalPayoutItemId = payoutDetails.itemId;
   milestone.payoutTransactionId = payoutDetails.transactionId;
   milestone.disbursedAt = new Date().toISOString();
+  if (payoutDetails.invoice) {
+    milestone.invoice = payoutDetails.invoice;
+  }
 
   contract.disbursedAmount += milestone.amount;
 
@@ -249,6 +295,35 @@ export function recordMilestonePayout(
   if (allDisbursed) {
     contract.status = 'completed';
   }
+
+  updateContract(contract);
+  return milestone;
+}
+
+export function addDisputeMessage(
+  contractId: string,
+  milestoneId: string,
+  message: {
+    sender: 'client' | 'contractor' | 'agent';
+    senderName: string;
+    message: string;
+  }
+): Milestone | null {
+  const contract = getContractById(contractId);
+  if (!contract) return null;
+
+  const milestone = contract.milestones.find(m => m.id === milestoneId);
+  if (!milestone) return null;
+
+  if (!milestone.disputeMessages) {
+    milestone.disputeMessages = [];
+  }
+
+  milestone.disputeMessages.push({
+    ...message,
+    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    timestamp: new Date().toISOString(),
+  });
 
   updateContract(contract);
   return milestone;

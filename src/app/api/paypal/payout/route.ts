@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { executeContractorPayout } from '@/lib/paypal';
+import { executeContractorPayout, generateMilestoneInvoice } from '@/lib/paypal';
 import { getContractById, recordMilestonePayout } from '@/lib/store';
 
 export async function POST(request: Request) {
@@ -36,10 +36,25 @@ export async function POST(request: Request) {
     const itemId = item?.payout_item_id || `PI-${Date.now()}`;
     const txId = item?.transaction_id || `TX-PP-${Date.now()}`;
 
+    // Generate compliant tax invoice
+    const invoice = await generateMilestoneInvoice({
+      milestoneId: milestone.id,
+      contractId: contract.id,
+      clientName: contract.client.name,
+      clientEmail: contract.client.email,
+      contractorName: contract.contractor.name,
+      contractorEmail: contract.contractor.paypalEmail,
+      amount: milestone.amount,
+      currency: contract.currency,
+      milestoneTitle: milestone.title,
+      transactionId: txId,
+    });
+
     recordMilestonePayout(contractId, milestoneId, {
       batchId,
       itemId,
       transactionId: txId,
+      invoice,
     });
 
     const updatedContract = getContractById(contractId);
@@ -50,6 +65,7 @@ export async function POST(request: Request) {
       batchId,
       itemId,
       transactionId: txId,
+      invoice,
       contract: updatedContract,
     });
   } catch (error: any) {

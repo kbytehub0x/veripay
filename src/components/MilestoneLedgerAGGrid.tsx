@@ -16,10 +16,9 @@ import {
   Bot, 
   Eye, 
   DollarSign, 
-  Zap 
+  Zap,
+  Receipt
 } from 'lucide-react';
-
-
 
 interface MilestoneLedgerAGGridProps {
   milestones: Milestone[];
@@ -27,6 +26,7 @@ interface MilestoneLedgerAGGridProps {
   onSubmitEvidence: (milestone: Milestone) => void;
   onViewAudit: (milestone: Milestone) => void;
   onApprovePayout: (milestone: Milestone) => void;
+  onViewInvoice?: (milestone: Milestone) => void;
   isProcessing: boolean;
 }
 
@@ -36,6 +36,7 @@ export const MilestoneLedgerAGGrid: React.FC<MilestoneLedgerAGGridProps> = ({
   onSubmitEvidence,
   onViewAudit,
   onApprovePayout,
+  onViewInvoice,
   isProcessing,
 }) => {
   const gridRef = useRef<AgGridReact>(null);
@@ -229,6 +230,17 @@ export const MilestoneLedgerAGGrid: React.FC<MilestoneLedgerAGGridProps> = ({
           >
             <Eye className="w-3.5 h-3.5 text-slate-500" />
             <span>Audit</span>
+          </button>
+        )}
+
+        {m.status === 'disbursed' && (
+          <button
+            onClick={() => onViewInvoice && onViewInvoice(m)}
+            className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-[#0070BA] text-xs font-semibold rounded-lg transition border border-blue-200"
+            title="View PayPal Invoicing Tax Receipt"
+          >
+            <Receipt className="w-3.5 h-3.5" />
+            <span>Invoice</span>
           </button>
         )}
 
