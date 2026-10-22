@@ -10,6 +10,9 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onNewContract, onResetDemo, isResetting }) => {
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
+  const isLiveSandbox = Boolean(clientId && clientId !== 'test' && clientId !== 'sb-test-client-id');
+
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -23,19 +26,28 @@ export const Navbar: React.FC<NavbarProps> = ({ onNewContract, onResetDemo, isRe
             <div className="flex items-center gap-2">
               <span className="font-bold text-xl tracking-tight text-slate-900">VeriPay</span>
               <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 tracking-wide">
-                AI + PayPal Escrow
+                Agentic Commerce
               </span>
             </div>
-            <p className="text-xs text-slate-500">Autonomous Evidence-Gated Milestone Payouts</p>
+            <p className="text-xs text-slate-500">Autonomous Evidence-Gated Milestone Releases</p>
           </div>
         </div>
 
-        {/* Center / Hackathon Badge */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-medium">
-          <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
-          <span>PayPal AI Hackathon 2026</span>
-          <span className="text-amber-400">•</span>
-          <span className="font-semibold text-amber-900">Agentic Commerce</span>
+        {/* Center: Live Sandbox vs Simulator Mode Indicator */}
+        <div className="hidden md:flex items-center gap-2">
+          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+            isLiveSandbox 
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+              : 'bg-amber-50 text-amber-900 border-amber-300'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${isLiveSandbox ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+            <span>{isLiveSandbox ? 'PayPal Sandbox: LIVE API CALLS' : 'PayPal Simulator: DEMO MODE'}</span>
+          </div>
+          {!isLiveSandbox && (
+            <span className="text-[10px] text-slate-400 hidden lg:inline">
+              (Add sandbox credentials in .env.local for live PayPal API)
+            </span>
+          )}
         </div>
 
         {/* Actions */}

@@ -13,13 +13,13 @@ Traditional freelance and B2B contract platforms charge **10–20% rake fees** j
 - **Traditional automated billing** lacks intelligence and cannot audit whether deliverables actually meet requirements.
 
 **VeriPay** solves this by bridging **Autonomous AI Reasoning (VeriAgent)** with **PayPal Developer APIs**:
-1. **Client Funds Escrow:** Deposits milestone funds into an escrow vault via **PayPal Orders v2 / Checkout**.
+1. **Client Funds Milestone:** The client approves and pays a milestone through **PayPal Orders v2**. VeriPay records the funded milestone balance and holds release pending AI verification and policy approval.
 2. **Contractor Submits Evidence:** Submits pull request links, git diffs, and automated test suite logs.
-3. **VeriAgent Audits Deliverable:** Evaluates code, test assertions, coverage, and OpenAPI documentation against contractual acceptance criteria, generating a **0–100% Confidence Score**.
+3. **VeriAgent Audits Deliverable:** Evaluates code, test assertions, coverage, and OpenAPI documentation against contractual acceptance criteria, generating an explainable **0–100% Confidence Score**.
 4. **Policy Guardrail Execution:**
-   - **Tier 1 (Instant Auto-Payout):** Score $\ge 90\%$ and Amount $\le \$500 \rightarrow$ Immediately triggers **PayPal Payouts REST API** (`/v1/payments/payouts`) to deposit funds directly into the contractor's PayPal account.
+   - **Tier 1 (Instant Auto-Payout):** Score $\ge 90\%$ and Amount $\le \$500 \rightarrow$ Immediately creates a **PayPal Payouts batch** (`/v1/payments/payouts`) to disburse the approved milestone amount to the contractor's PayPal email, using a unique, deterministic `sender_batch_id` for idempotency.
    - **Tier 2 (Human-in-the-Loop):** Score $70\text{--}89\%$ or Amount $>\$500 \rightarrow$ Prepares the payout batch and prompts the client for 1-click confirmation with an itemized audit dossier.
-   - **Tier 3 (Remediation Loop):** Score $< 70\% \rightarrow$ Escrow remains locked in vault; generates an actionable punchlist for the contractor.
+   - **Tier 3 (Remediation Loop):** Score $< 70\% \rightarrow$ Release remains held; generates an actionable punchlist for the contractor.
 5. **Interactive Audit Matrix:** Powered by **AG Grid** for real-time milestone tracking, confidence ratings, and PayPal rail receipts.
 
 ---
@@ -74,6 +74,8 @@ VeriPay is designed for autonomous commerce: an AI agent evaluates deliverables 
 ---
 
 ## ⚡ Quick Start & Local Setup
+
+The full application flow is implemented and tested. With PayPal Sandbox credentials, VeriPay makes live Sandbox API calls for Orders, Payouts, Invoicing, and webhooks. Without credentials, it runs in a clearly labeled simulator mode so the experience remains reproducible for evaluators.
 
 ### 1. Prerequisites
 - Node.js 18+ (tested on Node v20)

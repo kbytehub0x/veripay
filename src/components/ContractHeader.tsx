@@ -56,7 +56,7 @@ export const ContractHeader: React.FC<ContractHeaderProps> = ({ contract }) => {
             <Building2 className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs text-slate-500 font-medium">Client / Escrow Depositor</div>
+            <div className="text-xs text-slate-500 font-medium">Client / Milestone Depositor</div>
             <div className="font-semibold text-slate-800">{contract.client.name}</div>
             <div className="text-xs text-slate-500">{contract.client.company || contract.client.email}</div>
             <div className="text-[11px] font-mono text-indigo-600 truncate mt-0.5">
@@ -79,13 +79,13 @@ export const ContractHeader: React.FC<ContractHeaderProps> = ({ contract }) => {
           </div>
         </div>
 
-        {/* Escrow Vault Stat */}
+        {/* Milestone Balance Stat */}
         <div className="flex items-start gap-3 bg-blue-50/60 p-3 rounded-xl border border-blue-100">
           <div className="p-2 rounded-lg bg-blue-600 text-white mt-0.5">
             <Lock className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs text-blue-700 font-medium">Secured in Escrow</div>
+            <div className="text-xs text-blue-700 font-medium">Funded Milestone Balance</div>
             <div className="text-lg font-bold text-blue-900">${contract.fundedEscrowAmount}</div>
             <div className="text-xs text-blue-600">{percentFunded}% of total agreement</div>
           </div>
@@ -116,7 +116,7 @@ export const ContractHeader: React.FC<ContractHeaderProps> = ({ contract }) => {
             <div 
               style={{ width: `${Math.max(0, percentFunded - percentDisbursed)}%` }} 
               className="bg-[#0070BA] h-full transition-all duration-500" 
-              title={`Funded in Escrow: $${contract.fundedEscrowAmount - contract.disbursedAmount}`}
+              title={`Funded Balance: $${contract.fundedEscrowAmount - contract.disbursedAmount}`}
             />
           </div>
         </div>
@@ -128,7 +128,7 @@ export const ContractHeader: React.FC<ContractHeaderProps> = ({ contract }) => {
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-[#0070BA]" />
-            <span>In Escrow (${contract.fundedEscrowAmount - contract.disbursedAmount})</span>
+            <span>Funded Balance (${contract.fundedEscrowAmount - contract.disbursedAmount})</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />

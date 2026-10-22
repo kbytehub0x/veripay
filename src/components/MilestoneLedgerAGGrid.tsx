@@ -84,7 +84,7 @@ export const MilestoneLedgerAGGrid: React.FC<MilestoneLedgerAGGridProps> = ({
           <div className="flex items-center gap-1.5 h-full">
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
               <Lock className="w-3 h-3 text-blue-600" />
-              In Escrow Vault
+              Funded / Release Held
             </span>
           </div>
         );
@@ -188,7 +188,7 @@ export const MilestoneLedgerAGGrid: React.FC<MilestoneLedgerAGGridProps> = ({
             className="flex items-center gap-1 px-3 py-1 bg-[#0070BA] hover:bg-[#003087] text-white text-xs font-semibold rounded-lg shadow-sm transition"
           >
             <DollarSign className="w-3.5 h-3.5" />
-            <span>Fund Escrow</span>
+            <span>Fund Milestone</span>
           </button>
         )}
 

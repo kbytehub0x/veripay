@@ -99,13 +99,13 @@ export const EscrowFundingModal: React.FC<EscrowFundingModalProps> = ({
               <Lock className="w-4 h-4" />
             </span>
             <span className="text-xs font-semibold uppercase tracking-wider text-blue-100">
-              PayPal Escrow Vault Deposit
+              PayPal Orders v2 Milestone Deposit
             </span>
           </div>
 
           <h3 className="text-xl font-bold">{milestone.title}</h3>
           <p className="text-xs text-blue-100 mt-1">
-            Deposit funds securely. Funds are held in escrow until VeriAgent verifies contractor evidence.
+            Approve and pay milestone via PayPal Orders v2. VeriPay records the funded milestone and holds release pending AI verification and policy approval.
           </p>
         </div>
 
@@ -114,7 +114,7 @@ export const EscrowFundingModal: React.FC<EscrowFundingModalProps> = ({
           {/* Amount Box */}
           <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 mb-5">
             <div>
-              <span className="text-xs text-slate-500 font-medium">Milestone Escrow Amount</span>
+              <span className="text-xs text-slate-500 font-medium">Milestone Amount</span>
               <div className="text-2xl font-black text-slate-900 mt-0.5">
                 ${milestone.amount.toFixed(2)} <span className="text-xs font-normal text-slate-500">{contract.currency}</span>
               </div>
@@ -145,9 +145,8 @@ export const EscrowFundingModal: React.FC<EscrowFundingModalProps> = ({
           <div className="flex items-start gap-2.5 p-3 rounded-xl bg-blue-50/70 border border-blue-200/70 text-xs text-blue-900 mb-6">
             <ShieldCheck className="w-4 h-4 text-[#0070BA] shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold">Zero-Risk Escrow Guarantee:</span> Your money is not released 
-              until the contractor provides pull requests, passing test suites, and deliverables that satisfy 
-              the contract criteria above.
+              <span className="font-semibold">Conditional Release Guarantee:</span> Release is held pending 
+              VeriAgent acceptance criteria verification and policy firewall approval.
             </div>
           </div>
 
@@ -160,7 +159,7 @@ export const EscrowFundingModal: React.FC<EscrowFundingModalProps> = ({
           {depositSuccess ? (
             <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
               <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto mb-1 animate-bounce" />
-              <div className="text-sm font-bold text-emerald-900">Escrow Funded Successfully!</div>
+              <div className="text-sm font-bold text-emerald-900">Milestone Funded via PayPal Orders!</div>
               <div className="text-xs font-mono text-emerald-700 mt-0.5">Order ID: {capturedOrderId}</div>
             </div>
           ) : (
@@ -177,7 +176,7 @@ export const EscrowFundingModal: React.FC<EscrowFundingModalProps> = ({
               ) : (
                 <>
                   <CreditCard className="w-4 h-4" />
-                  <span>Authorize & Fund Escrow (${milestone.amount})</span>
+                  <span>Authorize & Fund Milestone (${milestone.amount})</span>
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </>
               )}

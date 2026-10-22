@@ -44,7 +44,7 @@ export const GuidedDemoTour: React.FC<GuidedDemoTourProps> = ({ onTriggerStep })
             </div>
             <div className="overflow-hidden">
               <div className="text-[10px] uppercase font-bold text-blue-200">Step 1</div>
-              <div className="text-[11px] font-semibold text-white truncate">Fund Escrow</div>
+              <div className="text-[11px] font-semibold text-white truncate">Fund Milestone</div>
             </div>
           </button>
 

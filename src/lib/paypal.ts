@@ -204,7 +204,10 @@ export async function executeContractorPayout(params: {
 }) {
   const token = await getPayPalAccessToken();
   const currency = params.currency || 'USD';
-  const batchId = `VP-BATCH-${Date.now().toString(36).toUpperCase()}`;
+  // Deterministic sender_batch_id prevents duplicate payouts on retry (PayPal 30-day idempotency)
+  const cleanContractId = params.contractId.replace(/[^a-zA-Z0-9]/g, '').slice(-8);
+  const cleanMilestoneId = params.milestoneId.replace(/[^a-zA-Z0-9]/g, '').slice(-8);
+  const batchId = `VP-${cleanContractId}-${cleanMilestoneId}`;
   const senderItemId = `VP-ITEM-${params.milestoneId}`;
 
   if (token.startsWith('mock_sandbox_access_token')) {
