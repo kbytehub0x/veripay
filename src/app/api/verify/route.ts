@@ -87,14 +87,20 @@ export async function POST(request: Request) {
         };
       } catch (payoutErr: any) {
         console.error('PayPal Payout execution error:', payoutErr);
+        payoutResult = {
+          status: 'FAILED',
+          error: payoutErr.message || 'PayPal Payout execution failed',
+        };
       }
     }
 
     const updatedContract = getContractById(contractId);
+    const autoDisbursed = Boolean(payoutResult && payoutResult.status === 'SUCCESS');
+
     return NextResponse.json({
       success: true,
       audit,
-      autoDisbursed: audit.policyEvaluation.autoReleaseEligible,
+      autoDisbursed,
       payoutResult,
       contract: updatedContract,
     });

@@ -29,7 +29,16 @@ export async function runVerificationAgent(params: {
 }
 
 /**
- * Heuristic & Code Evidence Verification Engine
+ * Dual-Engine Architecture Note:
+ * 
+ * 1. Semantic Primary Engine (evaluateWithGemini):
+ *    Uses Google Gemini 1.5/2.0 Flash with JSON Schema enforcement for nuanced, contextual understanding
+ *    of code diffs, architectural patterns, and acceptance criteria semantics.
+ * 
+ * 2. Deterministic Fallback Engine (evaluateWithHeuristicEngine):
+ *    Acts as a zero-dependency, high-resilience safety rail for offline testing, local judge evaluation,
+ *    and automated CI test runners. Performs AST keyword extraction, test pass/fail ratio calculations,
+ *    and coverage threshold verification without external network dependency.
  */
 function evaluateWithHeuristicEngine(
   milestone: Milestone,

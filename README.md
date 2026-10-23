@@ -109,6 +109,8 @@ npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+> **Demo Data Seeding Note:** All demo agreements, milestones, and telemetry logs are pre-seeded in memory. If demo data resets or you want a fresh testing run, simply click the **"Reset"** button in the navbar or restart the server.
+
 ---
 
 ## 🎬 3-Minute Demo Video Walkthrough Script
