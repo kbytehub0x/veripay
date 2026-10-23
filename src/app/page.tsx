@@ -99,6 +99,20 @@ export default function Dashboard() {
     } else {
       showToast(`Audit Completed with Punchlist (Score: ${data.audit.confidenceScore}%). Remediation required.`, 'warning');
     }
+
+    // Auto-open the Audit Dossier modal so score, trace, and settlement tabs are instantly visible
+    if (evidenceMilestone) {
+      setAuditMilestone({
+        ...evidenceMilestone,
+        audit: data.audit,
+        status: data.autoDisbursed 
+          ? 'disbursed' 
+          : data.audit.verdict === 'REQUIRES_CLIENT_APPROVAL' 
+            ? 'verified_awaiting_approval' 
+            : 'remediation_needed'
+      });
+    }
+
     await loadContracts();
   };
 
@@ -119,6 +133,18 @@ export default function Dashboard() {
       const data = await res.json();
       if (data.success) {
         showToast(`Client Approved! $${milestone.amount} disbursed to ${activeContract.contractor.paypalEmail} (Batch: ${data.batchId})`, 'success');
+        
+        if (auditMilestone && auditMilestone.id === milestone.id) {
+          setAuditMilestone({
+            ...auditMilestone,
+            status: 'disbursed',
+            payoutTransactionId: data.transactionId,
+            paypalPayoutBatchId: data.batchId,
+            invoice: data.invoice,
+            disbursedAt: new Date().toISOString()
+          });
+        }
+
         await loadContracts();
       } else {
         showToast(data.error || 'Failed to approve payout', 'warning');
