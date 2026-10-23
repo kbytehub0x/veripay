@@ -4,6 +4,8 @@
  * and Payouts API (Instant contractor release) on the PayPal Sandbox.
  */
 
+import { recordApiLog, recordWebhookEvent } from './store';
+
 const PAYPAL_API_BASE = process.env.PAYPAL_ENVIRONMENT === 'production' 
   ? 'https://api-m.paypal.com' 
   : 'https://api-m.sandbox.paypal.com';
@@ -64,9 +66,48 @@ export async function createEscrowOrder(params: {
   const token = await getPayPalAccessToken();
   const currency = params.currency || 'USD';
 
+  const orderPayload = {
+    intent: 'CAPTURE',
+    purchase_units: [
+      {
+        reference_id: params.milestoneId,
+        description: `VeriPay Escrow: ${params.title}`,
+        custom_id: `CID-${params.contractId}`,
+        amount: {
+          currency_code: currency,
+          value: params.amount.toFixed(2),
+          breakdown: {
+            item_total: {
+              currency_code: currency,
+              value: params.amount.toFixed(2),
+            }
+          }
+        },
+        items: [
+          {
+            name: params.title,
+            quantity: '1',
+            unit_amount: {
+              currency_code: currency,
+              value: params.amount.toFixed(2),
+            },
+            category: 'DIGITAL_GOODS'
+          }
+        ]
+      }
+    ],
+    application_context: {
+      brand_name: 'VeriPay Autonomous Escrow',
+      landing_page: 'NO_PREFERENCE',
+      user_action: 'PAY_NOW',
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/paypal/capture-order?milestoneId=${params.milestoneId}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/?cancelled=true`,
+    }
+  };
+
   // Simulation mode
   if (token.startsWith('mock_sandbox_access_token')) {
-    return {
+    const mockOrder = {
       id: `ORD-MOCK-${Date.now().toString(36).toUpperCase()}`,
       status: 'CREATED',
       intent: 'CAPTURE',
@@ -86,6 +127,31 @@ export async function createEscrowOrder(params: {
         }
       ]
     };
+
+    recordApiLog({
+      endpoint: '/v2/checkout/orders',
+      method: 'POST',
+      mode: 'simulated',
+      statusCode: 201,
+      description: `Create Orders v2 record to fund milestone: ${params.title}`,
+      requestHeaders: {
+        'Authorization': 'Bearer mock_sandbox_token',
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      requestBody: orderPayload,
+      responseBody: mockOrder
+    });
+
+    recordWebhookEvent({
+      resource_type: 'checkout-order',
+      event_type: 'CHECKOUT.ORDER.APPROVED',
+      summary: `[SIMULATED] PayPal Orders v2: Client authorized funding for order ${mockOrder.id}`,
+      mode: 'simulated',
+      resource: mockOrder
+    });
+
+    return mockOrder;
   }
 
   const response = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
@@ -95,44 +161,7 @@ export async function createEscrowOrder(params: {
       'Content-Type': 'application/json',
       'Prefer': 'return=representation',
     },
-    body: JSON.stringify({
-      intent: 'CAPTURE',
-      purchase_units: [
-        {
-          reference_id: params.milestoneId,
-          description: `VeriPay Escrow: ${params.title}`,
-          custom_id: `CID-${params.contractId}`,
-          amount: {
-            currency_code: currency,
-            value: params.amount.toFixed(2),
-            breakdown: {
-              item_total: {
-                currency_code: currency,
-                value: params.amount.toFixed(2),
-              }
-            }
-          },
-          items: [
-            {
-              name: params.title,
-              quantity: '1',
-              unit_amount: {
-                currency_code: currency,
-                value: params.amount.toFixed(2),
-              },
-              category: 'DIGITAL_GOODS'
-            }
-          ]
-        }
-      ],
-      application_context: {
-        brand_name: 'VeriPay Autonomous Escrow',
-        landing_page: 'NO_PREFERENCE',
-        user_action: 'PAY_NOW',
-        return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/paypal/capture-order?milestoneId=${params.milestoneId}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/?cancelled=true`,
-      }
-    }),
+    body: JSON.stringify(orderPayload),
   });
 
   if (!response.ok) {
@@ -140,7 +169,24 @@ export async function createEscrowOrder(params: {
     throw new Error(`PayPal Order Creation failed: ${errorText}`);
   }
 
-  return response.json();
+  const liveOrder = await response.json();
+
+  recordApiLog({
+    endpoint: '/v2/checkout/orders',
+    method: 'POST',
+    mode: 'live_sandbox',
+    statusCode: 201,
+    description: `Create Orders v2 record to fund milestone: ${params.title}`,
+    requestHeaders: {
+      'Authorization': `Bearer ${token.slice(0, 10)}...`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    requestBody: orderPayload,
+    responseBody: liveOrder
+  });
+
+  return liveOrder;
 }
 
 /**
@@ -150,7 +196,7 @@ export async function captureEscrowOrder(orderId: string) {
   const token = await getPayPalAccessToken();
 
   if (token.startsWith('mock_sandbox_access_token') || orderId.startsWith('ORD-MOCK')) {
-    return {
+    const mockCapture = {
       id: orderId,
       status: 'COMPLETED',
       payer: {
@@ -172,6 +218,30 @@ export async function captureEscrowOrder(orderId: string) {
         }
       ]
     };
+
+    recordApiLog({
+      endpoint: `/v2/checkout/orders/${orderId}/capture`,
+      method: 'POST',
+      mode: 'simulated',
+      statusCode: 201,
+      description: `Capture authorized funds for order: ${orderId}`,
+      requestHeaders: {
+        'Authorization': 'Bearer mock_sandbox_token',
+        'Content-Type': 'application/json'
+      },
+      requestBody: {},
+      responseBody: mockCapture
+    });
+
+    recordWebhookEvent({
+      resource_type: 'capture',
+      event_type: 'PAYMENT.CAPTURE.COMPLETED',
+      summary: `[SIMULATED] Payment capture completed for order ${orderId}`,
+      mode: 'simulated',
+      resource: mockCapture
+    });
+
+    return mockCapture;
   }
 
   const response = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderId}/capture`, {
@@ -188,7 +258,23 @@ export async function captureEscrowOrder(orderId: string) {
     throw new Error(`PayPal Order Capture failed: ${errorText}`);
   }
 
-  return response.json();
+  const liveCapture = await response.json();
+
+  recordApiLog({
+    endpoint: `/v2/checkout/orders/${orderId}/capture`,
+    method: 'POST',
+    mode: 'live_sandbox',
+    statusCode: 201,
+    description: `Capture authorized funds for order: ${orderId}`,
+    requestHeaders: {
+      'Authorization': `Bearer ${token.slice(0, 10)}...`,
+      'Content-Type': 'application/json'
+    },
+    requestBody: {},
+    responseBody: liveCapture
+  });
+
+  return liveCapture;
 }
 
 /**
@@ -210,8 +296,28 @@ export async function executeContractorPayout(params: {
   const batchId = `VP-${cleanContractId}-${cleanMilestoneId}`;
   const senderItemId = `VP-ITEM-${params.milestoneId}`;
 
+  const payoutPayload = {
+    sender_batch_header: {
+      sender_batch_id: batchId,
+      email_subject: `VeriPay: Milestone Payout Released for ${params.note}`,
+      email_message: `Your work has been verified by VeriAgent and approved. Payment of ${params.amount} ${currency} has been credited to your PayPal account.`,
+    },
+    items: [
+      {
+        recipient_type: 'EMAIL',
+        amount: {
+          value: params.amount.toFixed(2),
+          currency: currency,
+        },
+        note: params.note,
+        sender_item_id: senderItemId,
+        receiver: params.contractorEmail,
+      }
+    ]
+  };
+
   if (token.startsWith('mock_sandbox_access_token')) {
-    return {
+    const mockPayout = {
       batch_header: {
         payout_batch_id: batchId,
         batch_status: 'SUCCESS',
@@ -247,6 +353,38 @@ export async function executeContractorPayout(params: {
         }
       ]
     };
+
+    recordApiLog({
+      endpoint: '/v1/payments/payouts',
+      method: 'POST',
+      mode: 'simulated',
+      statusCode: 201,
+      description: `Execute autonomous payout disbursement to ${params.contractorEmail}`,
+      requestHeaders: {
+        'Authorization': 'Bearer mock_sandbox_token',
+        'Content-Type': 'application/json'
+      },
+      requestBody: payoutPayload,
+      responseBody: mockPayout
+    });
+
+    recordWebhookEvent({
+      resource_type: 'payouts',
+      event_type: 'PAYMENT.PAYOUTSBATCH.SUCCESS',
+      summary: `[SIMULATED] PayPal Payouts batch ${batchId} succeeded`,
+      mode: 'simulated',
+      resource: mockPayout.batch_header
+    });
+
+    recordWebhookEvent({
+      resource_type: 'payouts_item',
+      event_type: 'PAYMENT.PAYOUTS-ITEM.SUCCEEDED',
+      summary: `[SIMULATED] Contractor payout item processed ($${params.amount.toFixed(2)} ${currency} to ${params.contractorEmail})`,
+      mode: 'simulated',
+      resource: mockPayout.items[0]
+    });
+
+    return mockPayout;
   }
 
   const response = await fetch(`${PAYPAL_API_BASE}/v1/payments/payouts`, {
@@ -255,25 +393,7 @@ export async function executeContractorPayout(params: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      sender_batch_header: {
-        sender_batch_id: batchId,
-        email_subject: `VeriPay: Milestone Payout Released for ${params.note}`,
-        email_message: `Your work has been verified by VeriAgent and approved. Payment of ${params.amount} ${currency} has been credited to your PayPal account.`,
-      },
-      items: [
-        {
-          recipient_type: 'EMAIL',
-          amount: {
-            value: params.amount.toFixed(2),
-            currency: currency,
-          },
-          note: params.note,
-          sender_item_id: senderItemId,
-          receiver: params.contractorEmail,
-        }
-      ]
-    }),
+    body: JSON.stringify(payoutPayload),
   });
 
   if (!response.ok) {
@@ -281,7 +401,23 @@ export async function executeContractorPayout(params: {
     throw new Error(`PayPal Payout execution failed: ${errorText}`);
   }
 
-  return response.json();
+  const livePayout = await response.json();
+
+  recordApiLog({
+    endpoint: '/v1/payments/payouts',
+    method: 'POST',
+    mode: 'live_sandbox',
+    statusCode: 201,
+    description: `Execute autonomous payout disbursement to ${params.contractorEmail}`,
+    requestHeaders: {
+      'Authorization': `Bearer ${token.slice(0, 10)}...`,
+      'Content-Type': 'application/json'
+    },
+    requestBody: payoutPayload,
+    responseBody: livePayout
+  });
+
+  return livePayout;
 }
 
 /**
@@ -303,9 +439,44 @@ export async function generateMilestoneInvoice(params: {
   const currency = params.currency || 'USD';
   const invoiceNumber = `INV2-VP-${Date.now().toString(36).toUpperCase()}`;
 
+  const invoicePayload = {
+    detail: {
+      invoice_number: invoiceNumber,
+      reference: params.transactionId || `TX-${params.milestoneId}`,
+      invoice_date: new Date().toISOString().split('T')[0],
+      currency_code: currency,
+      note: `VeriPay Evidence-Gated Milestone Release: ${params.milestoneTitle}`,
+      term: 'DUE_ON_RECEIPT',
+    },
+    invoicer: {
+      name: { given_name: params.contractorName },
+      email_address: params.contractorEmail,
+    },
+    primary_recipients: [
+      {
+        billing_info: {
+          name: { given_name: params.clientName },
+          email_address: params.clientEmail,
+        }
+      }
+    ],
+    items: [
+      {
+        name: params.milestoneTitle,
+        description: `Contract Milestone: ${params.milestoneId}`,
+        quantity: '1',
+        unit_amount: {
+          currency_code: currency,
+          value: params.amount.toFixed(2),
+        },
+        unit_of_measure: 'QUANTITY',
+      }
+    ]
+  };
+
   // If in sandbox simulator mode or test tokens:
   if (token.startsWith('mock_sandbox_access_token')) {
-    return {
+    const mockInvoice = {
       invoiceId: `INV-${Date.now().toString(36).toUpperCase()}`,
       invoiceNumber,
       status: 'PAID' as const,
@@ -315,6 +486,30 @@ export async function generateMilestoneInvoice(params: {
       paidAt: new Date().toISOString(),
       pdfUrl: `https://www.sandbox.paypal.com/invoice/p/#${invoiceNumber}`,
     };
+
+    recordApiLog({
+      endpoint: '/v2/invoicing/invoices',
+      method: 'POST',
+      mode: 'simulated',
+      statusCode: 201,
+      description: `Generate milestone invoice record (${invoiceNumber})`,
+      requestHeaders: {
+        'Authorization': 'Bearer mock_sandbox_token',
+        'Content-Type': 'application/json'
+      },
+      requestBody: invoicePayload,
+      responseBody: mockInvoice
+    });
+
+    recordWebhookEvent({
+      resource_type: 'invoices',
+      event_type: 'INVOICING.INVOICE.PAID',
+      summary: `[SIMULATED] PayPal Invoice ${invoiceNumber} marked as PAID`,
+      mode: 'simulated',
+      resource: mockInvoice
+    });
+
+    return mockInvoice;
   }
 
   try {
@@ -324,45 +519,12 @@ export async function generateMilestoneInvoice(params: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        detail: {
-          invoice_number: invoiceNumber,
-          reference: params.transactionId || `TX-${params.milestoneId}`,
-          invoice_date: new Date().toISOString().split('T')[0],
-          currency_code: currency,
-          note: `VeriPay Evidence-Gated Milestone Release: ${params.milestoneTitle}`,
-          term: 'DUE_ON_RECEIPT',
-        },
-        invoicer: {
-          name: { given_name: params.contractorName },
-          email_address: params.contractorEmail,
-        },
-        primary_recipients: [
-          {
-            billing_info: {
-              name: { given_name: params.clientName },
-              email_address: params.clientEmail,
-            }
-          }
-        ],
-        items: [
-          {
-            name: params.milestoneTitle,
-            description: `Contract Milestone: ${params.milestoneId}`,
-            quantity: '1',
-            unit_amount: {
-              currency_code: currency,
-              value: params.amount.toFixed(2),
-            },
-            unit_of_measure: 'QUANTITY',
-          }
-        ]
-      })
+      body: JSON.stringify(invoicePayload)
     });
 
     if (response.ok) {
       const data = await response.json();
-      return {
+      const liveInvoice = {
         invoiceId: data.id || `INV-${Date.now()}`,
         invoiceNumber,
         status: 'PAID' as const,
@@ -372,12 +534,28 @@ export async function generateMilestoneInvoice(params: {
         paidAt: new Date().toISOString(),
         pdfUrl: `https://www.sandbox.paypal.com/invoice/p/#${data.id || invoiceNumber}`,
       };
+
+      recordApiLog({
+        endpoint: '/v2/invoicing/invoices',
+        method: 'POST',
+        mode: 'live_sandbox',
+        statusCode: 201,
+        description: `Generate milestone invoice record (${invoiceNumber})`,
+        requestHeaders: {
+          'Authorization': `Bearer ${token.slice(0, 10)}...`,
+          'Content-Type': 'application/json'
+        },
+        requestBody: invoicePayload,
+        responseBody: liveInvoice
+      });
+
+      return liveInvoice;
     }
   } catch (err) {
     console.warn('Invoicing API warning, falling back to structured receipt:', err);
   }
 
-  return {
+  const fallbackInvoice = {
     invoiceId: `INV-${Date.now().toString(36).toUpperCase()}`,
     invoiceNumber,
     status: 'PAID' as const,
@@ -387,4 +565,20 @@ export async function generateMilestoneInvoice(params: {
     paidAt: new Date().toISOString(),
     pdfUrl: `https://www.sandbox.paypal.com/invoice/p/#${invoiceNumber}`,
   };
+
+  recordApiLog({
+    endpoint: '/v2/invoicing/invoices',
+    method: 'POST',
+    mode: 'simulated',
+    statusCode: 201,
+    description: `Generate milestone invoice record fallback (${invoiceNumber})`,
+    requestHeaders: {
+      'Authorization': 'Bearer mock_sandbox_token',
+      'Content-Type': 'application/json'
+    },
+    requestBody: invoicePayload,
+    responseBody: fallbackInvoice
+  });
+
+  return fallbackInvoice;
 }

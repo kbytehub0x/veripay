@@ -1,4 +1,14 @@
-import { Contract, Milestone, MilestoneEvidence, VerificationAudit, MilestoneInvoice, DisputeMessage } from './types';
+import { 
+  Contract, 
+  Milestone, 
+  MilestoneEvidence, 
+  VerificationAudit, 
+  MilestoneInvoice, 
+  DisputeMessage,
+  PayPalApiLogEntry,
+  PayPalWebhookEvent,
+  DemoWalletState
+} from './types';
 
 // Initial Demo Contracts showcasing different states:
 // - Auto-disbursed milestone with real PayPal transaction ID
@@ -331,4 +341,276 @@ export function addDisputeMessage(
 
 export function resetDemoStore(): void {
   contractsStore = JSON.parse(JSON.stringify(INITIAL_CONTRACTS));
+  apiLogsStore = [...INITIAL_API_LOGS];
+  webhookEventsStore = [...INITIAL_WEBHOOK_EVENTS];
+}
+
+const INITIAL_API_LOGS: PayPalApiLogEntry[] = [
+  {
+    id: 'log_pp_01',
+    timestamp: '2026-10-19T10:14:02Z',
+    endpoint: '/v2/checkout/orders',
+    method: 'POST',
+    mode: 'simulated',
+    statusCode: 201,
+    description: 'Create Orders v2 record to fund Milestone: Authentication & RBAC',
+    requestHeaders: {
+      'Authorization': 'Bearer A21A...mock_sandbox_token',
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    requestBody: {
+      intent: 'CAPTURE',
+      purchase_units: [{
+        reference_id: 'ms_01_auth',
+        amount: { currency_code: 'USD', value: '400.00' },
+        description: 'VeriPay Milestone Escrow: Authentication & Role-Based Access Control'
+      }]
+    },
+    responseBody: {
+      id: 'ORD-SB-981247-FUNDED',
+      status: 'CREATED',
+      intent: 'CAPTURE',
+      links: [
+        { href: 'https://api-m.sandbox.paypal.com/v2/checkout/orders/ORD-SB-981247-FUNDED', rel: 'self', method: 'GET' },
+        { href: 'https://www.sandbox.paypal.com/checkoutnow?token=ORD-SB-981247-FUNDED', rel: 'approve', method: 'GET' }
+      ]
+    }
+  },
+  {
+    id: 'log_pp_02',
+    timestamp: '2026-10-19T10:14:15Z',
+    endpoint: '/v2/checkout/orders/ORD-SB-981247-FUNDED/capture',
+    method: 'POST',
+    mode: 'simulated',
+    statusCode: 201,
+    description: 'Capture PayPal Order funds into milestone ledger',
+    requestHeaders: {
+      'Authorization': 'Bearer A21A...mock_sandbox_token',
+      'Content-Type': 'application/json'
+    },
+    requestBody: {},
+    responseBody: {
+      id: 'ORD-SB-981247-FUNDED',
+      status: 'COMPLETED',
+      payer: { email_address: 'sb-client-apex@business.example.com', payer_id: 'SB_CLIENT_9824' },
+      purchase_units: [{
+        payments: {
+          captures: [{
+            id: 'CAP-SB-491029',
+            status: 'COMPLETED',
+            amount: { currency_code: 'USD', value: '400.00' }
+          }]
+        }
+      }]
+    }
+  },
+  {
+    id: 'log_pp_03',
+    timestamp: '2026-10-19T10:15:08Z',
+    endpoint: '/v1/payments/payouts',
+    method: 'POST',
+    mode: 'simulated',
+    statusCode: 201,
+    description: 'Autonomous Payout disbursement for passed Tier 1 milestone verification',
+    requestHeaders: {
+      'Authorization': 'Bearer A21A...mock_sandbox_token',
+      'Content-Type': 'application/json'
+    },
+    requestBody: {
+      sender_batch_header: {
+        sender_batch_id: 'VP-cnt_paypal_hackathon_01-ms_01_auth',
+        email_subject: 'VeriPay Milestone Released: Authentication & Role-Based Access Control'
+      },
+      items: [{
+        recipient_type: 'EMAIL',
+        amount: { value: '400.00', currency: 'USD' },
+        note: 'Tier 1 Autonomous Release: Verification Score 96%',
+        sender_item_id: 'VP-ITEM-ms_01_auth',
+        receiver: 'sb-contractor-devon@personal.example.com'
+      }]
+    },
+    responseBody: {
+      batch_header: {
+        payout_batch_id: 'VP-BATCH-K49F2L',
+        batch_status: 'SUCCESS',
+        amount: { currency: 'USD', value: '400.00' },
+        fees: { currency: 'USD', value: '0.25' }
+      },
+      items: [{
+        payout_item_id: 'PI-SANDBOX-7889',
+        transaction_id: 'TX-PAYPAL-982319084',
+        transaction_status: 'SUCCESS',
+        time_processed: '2026-10-19T10:15:10Z'
+      }]
+    }
+  },
+  {
+    id: 'log_pp_04',
+    timestamp: '2026-10-19T10:15:12Z',
+    endpoint: '/v2/invoicing/invoices',
+    method: 'POST',
+    mode: 'simulated',
+    statusCode: 201,
+    description: 'Generate milestone invoice record for accounting reconciliation',
+    requestHeaders: {
+      'Authorization': 'Bearer A21A...mock_sandbox_token',
+      'Content-Type': 'application/json'
+    },
+    requestBody: {
+      detail: {
+        invoice_number: 'INV2-VP-K49F2L',
+        reference: 'TX-PAYPAL-982319084',
+        currency_code: 'USD',
+        note: 'VeriPay Milestone Release: Authentication & Role-Based Access Control'
+      },
+      invoicer: { email_address: 'sb-contractor-devon@personal.example.com' },
+      primary_recipients: [{ billing_info: { email_address: 'sb-client-apex@business.example.com' } }],
+      items: [{ name: 'Authentication & Role-Based Access Control', quantity: '1', unit_amount: { currency_code: 'USD', value: '400.00' } }]
+    },
+    responseBody: {
+      id: 'INV-VP-98124',
+      invoice_number: 'INV2-VP-K49F2L',
+      status: 'PAID',
+      total_amount: { currency_code: 'USD', value: '400.00' }
+    }
+  }
+];
+
+const INITIAL_WEBHOOK_EVENTS: PayPalWebhookEvent[] = [
+  {
+    id: 'WH-EVT-98124-APP',
+    event_version: '1.0',
+    create_time: '2026-10-19T10:14:10Z',
+    resource_type: 'checkout-order',
+    event_type: 'CHECKOUT.ORDER.APPROVED',
+    summary: 'PayPal Orders v2: Client approved milestone escrow funding order ORD-SB-981247-FUNDED',
+    mode: 'simulated',
+    resource: {
+      id: 'ORD-SB-981247-FUNDED',
+      status: 'APPROVED',
+      intent: 'CAPTURE',
+      payer: { email_address: 'sb-client-apex@business.example.com', payer_id: 'SB_CLIENT_9824' },
+      purchase_units: [{ reference_id: 'ms_01_auth', amount: { currency_code: 'USD', value: '400.00' } }]
+    }
+  },
+  {
+    id: 'WH-EVT-98124-CAP',
+    event_version: '1.0',
+    create_time: '2026-10-19T10:14:16Z',
+    resource_type: 'capture',
+    event_type: 'PAYMENT.CAPTURE.COMPLETED',
+    summary: 'Payment capture completed for milestone ms_01_auth ($400.00 USD)',
+    mode: 'simulated',
+    resource: {
+      id: 'CAP-SB-491029',
+      status: 'COMPLETED',
+      amount: { currency_code: 'USD', value: '400.00' },
+      custom_id: 'CID-cnt_paypal_hackathon_01'
+    }
+  },
+  {
+    id: 'WH-EVT-98124-PAY',
+    event_version: '1.0',
+    create_time: '2026-10-19T10:15:10Z',
+    resource_type: 'payouts',
+    event_type: 'PAYMENT.PAYOUTSBATCH.SUCCESS',
+    summary: 'Batch payout VP-BATCH-K49F2L processed successfully via PayPal Payouts',
+    mode: 'simulated',
+    resource: {
+      batch_header: {
+        payout_batch_id: 'VP-BATCH-K49F2L',
+        batch_status: 'SUCCESS',
+        sender_batch_header: { sender_batch_id: 'VP-cnt_paypal_hackathon_01-ms_01_auth' },
+        amount: { currency: 'USD', value: '400.00' }
+      }
+    }
+  },
+  {
+    id: 'WH-EVT-98124-ITM',
+    event_version: '1.0',
+    create_time: '2026-10-19T10:15:10Z',
+    resource_type: 'payouts_item',
+    event_type: 'PAYMENT.PAYOUTS-ITEM.SUCCEEDED',
+    summary: 'Contractor payout item PI-SANDBOX-7889 cleared ($400.00 USD to sb-contractor-devon@personal.example.com)',
+    mode: 'simulated',
+    resource: {
+      payout_item_id: 'PI-SANDBOX-7889',
+      transaction_id: 'TX-PAYPAL-982319084',
+      transaction_status: 'SUCCESS',
+      payout_item: {
+        recipient_type: 'EMAIL',
+        receiver: 'sb-contractor-devon@personal.example.com',
+        amount: { currency: 'USD', value: '400.00' }
+      }
+    }
+  },
+  {
+    id: 'WH-EVT-98124-INV',
+    event_version: '1.0',
+    create_time: '2026-10-19T10:15:15Z',
+    resource_type: 'invoices',
+    event_type: 'INVOICING.INVOICE.PAID',
+    summary: 'PayPal Invoice INV2-VP-K49F2L marked as PAID upon automated payout settlement',
+    mode: 'simulated',
+    resource: {
+      id: 'INV-VP-98124',
+      invoice_number: 'INV2-VP-K49F2L',
+      status: 'PAID',
+      amount: { currency_code: 'USD', value: '400.00' }
+    }
+  }
+];
+
+let apiLogsStore: PayPalApiLogEntry[] = [...INITIAL_API_LOGS];
+let webhookEventsStore: PayPalWebhookEvent[] = [...INITIAL_WEBHOOK_EVENTS];
+
+export function getApiLogs(): PayPalApiLogEntry[] {
+  return apiLogsStore;
+}
+
+export function recordApiLog(entry: Omit<PayPalApiLogEntry, 'id' | 'timestamp'>): PayPalApiLogEntry {
+  const newEntry: PayPalApiLogEntry = {
+    ...entry,
+    id: `log_pp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+    timestamp: new Date().toISOString(),
+  };
+  apiLogsStore.unshift(newEntry);
+  return newEntry;
+}
+
+export function getWebhookEvents(): PayPalWebhookEvent[] {
+  return webhookEventsStore;
+}
+
+export function recordWebhookEvent(event: Omit<PayPalWebhookEvent, 'id' | 'create_time' | 'event_version'>): PayPalWebhookEvent {
+  const newEvent: PayPalWebhookEvent = {
+    ...event,
+    id: `WH-EVT-${Date.now().toString(36).toUpperCase()}`,
+    event_version: '1.0',
+    create_time: new Date().toISOString(),
+  };
+  webhookEventsStore.unshift(newEvent);
+  return newEvent;
+}
+
+export function getDemoWalletBalances(): DemoWalletState {
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
+  const isLiveSandbox = Boolean(clientId && clientId !== 'test' && clientId !== 'sb-test-client-id');
+
+  // Baseline wallet balances for demo personas
+  let clientBalance = 5000;
+  let contractorBalance = 1200;
+
+  for (const c of contractsStore) {
+    clientBalance -= (c.fundedEscrowAmount || 0);
+    contractorBalance += (c.disbursedAmount || 0);
+  }
+
+  return {
+    clientBalance: Math.max(0, clientBalance),
+    contractorBalance,
+    currency: 'USD',
+    isSimulated: !isLiveSandbox
+  };
 }

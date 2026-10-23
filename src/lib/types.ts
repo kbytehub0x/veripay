@@ -92,6 +92,42 @@ export interface Milestone {
   disputeMessages?: DisputeMessage[];
 }
 
+export interface PayPalApiLogEntry {
+  id: string;
+  timestamp: string;
+  endpoint: string;
+  method: 'GET' | 'POST' | 'PATCH';
+  mode: 'live_sandbox' | 'simulated';
+  statusCode: number;
+  requestHeaders: Record<string, string>;
+  requestBody: any;
+  responseBody: any;
+  description: string;
+}
+
+export interface PayPalWebhookEvent {
+  id: string;
+  event_version: string;
+  create_time: string;
+  resource_type: string;
+  event_type: 
+    | 'CHECKOUT.ORDER.APPROVED'
+    | 'PAYMENT.CAPTURE.COMPLETED'
+    | 'PAYMENT.PAYOUTSBATCH.SUCCESS'
+    | 'PAYMENT.PAYOUTS-ITEM.SUCCEEDED'
+    | 'INVOICING.INVOICE.PAID';
+  summary: string;
+  resource: any;
+  mode: 'live_sandbox' | 'simulated';
+}
+
+export interface DemoWalletState {
+  clientBalance: number;
+  contractorBalance: number;
+  currency: string;
+  isSimulated: boolean;
+}
+
 export interface Contract {
   id: string;
   title: string;

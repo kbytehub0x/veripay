@@ -5,9 +5,10 @@ import { Sparkles, DollarSign, Send, Zap, Receipt, ChevronRight } from 'lucide-r
 
 interface GuidedDemoTourProps {
   onTriggerStep: (stepNumber: 1 | 2 | 3 | 4) => void;
+  onOpenConsole?: () => void;
 }
 
-export const GuidedDemoTour: React.FC<GuidedDemoTourProps> = ({ onTriggerStep }) => {
+export const GuidedDemoTour: React.FC<GuidedDemoTourProps> = ({ onTriggerStep, onOpenConsole }) => {
   return (
     <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-4 mb-6 shadow-md border border-blue-800/80">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -26,9 +27,20 @@ export const GuidedDemoTour: React.FC<GuidedDemoTourProps> = ({ onTriggerStep })
                 60s Interactive Flow
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 mt-0.5">
-              Click any step below to launch the live PayPal & AI workflow:
-            </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <p className="text-[11px] text-slate-300">
+                Click any step below to launch the live PayPal & AI workflow:
+              </p>
+              {onOpenConsole && (
+                <button
+                  type="button"
+                  onClick={onOpenConsole}
+                  className="text-[10px] text-amber-300 hover:text-amber-200 underline font-semibold ml-1"
+                >
+                  (Telemetry Console)
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

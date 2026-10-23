@@ -28,6 +28,7 @@ interface VerificationAuditVisualizerProps {
   onClose: () => void;
   onApprovePayout: (milestone: Milestone) => Promise<void>;
   onViewInvoice?: (milestone: Milestone) => void;
+  onOpenConsole?: () => void;
   isProcessing: boolean;
 }
 
@@ -38,6 +39,7 @@ export const VerificationAuditVisualizer: React.FC<VerificationAuditVisualizerPr
   onClose,
   onApprovePayout,
   onViewInvoice,
+  onOpenConsole,
   isProcessing,
 }) => {
   const [activeTab, setActiveTab] = useState<'criteria' | 'trace' | 'payout'>('criteria');
@@ -346,8 +348,8 @@ export const VerificationAuditVisualizer: React.FC<VerificationAuditVisualizerPr
                     </div>
                   </div>
 
-                  {/* View Invoice Button */}
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                  {/* View Invoice & Inspect API Buttons */}
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <div className="font-bold text-slate-900 text-xs">PayPal Invoicing & Settlement Record</div>
                       <div className="text-slate-500 text-[11px] mt-0.5">
@@ -355,15 +357,27 @@ export const VerificationAuditVisualizer: React.FC<VerificationAuditVisualizerPr
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => {
-                        if (onViewInvoice) onViewInvoice(milestone);
-                      }}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-[#0070BA] hover:bg-[#003087] text-white text-xs font-semibold rounded-lg shadow-sm transition"
-                    >
-                      <Receipt className="w-3.5 h-3.5" />
-                      <span>View Official Invoice</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {onOpenConsole && (
+                        <button
+                          onClick={onOpenConsole}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-900 text-slate-100 text-xs font-semibold rounded-lg shadow-sm transition"
+                          title="Inspect raw REST API requests & responses"
+                        >
+                          <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                          <span>Inspect API</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (onViewInvoice) onViewInvoice(milestone);
+                        }}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#0070BA] hover:bg-[#003087] text-white text-xs font-semibold rounded-lg shadow-sm transition"
+                      >
+                        <Receipt className="w-3.5 h-3.5" />
+                        <span>View Invoice</span>
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (

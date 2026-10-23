@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Contract, Milestone } from '@/lib/types';
+import { Contract, Milestone, DemoWalletState } from '@/lib/types';
 import { Navbar } from '@/components/Navbar';
 import { ContractHeader } from '@/components/ContractHeader';
 import { GuardrailPolicyCard } from '@/components/GuardrailPolicyCard';
@@ -12,7 +12,8 @@ import { EvidenceSubmissionModal } from '@/components/EvidenceSubmissionModal';
 import { VerificationAuditVisualizer } from '@/components/VerificationAuditVisualizer';
 import { InvoiceReceiptModal } from '@/components/InvoiceReceiptModal';
 import { CreateContractModal } from '@/components/CreateContractModal';
-import { ShieldCheck, Zap, AlertCircle, CheckCircle2, ChevronRight, Lock } from 'lucide-react';
+import { SandboxDemoConsole } from '@/components/SandboxDemoConsole';
+import { ShieldCheck, Zap, AlertCircle, CheckCircle2, ChevronRight, Lock, Terminal } from 'lucide-react';
 
 export default function Dashboard() {
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -28,12 +29,35 @@ export default function Dashboard() {
   const [invoiceMilestone, setInvoiceMilestone] = useState<Milestone | null>(null);
   const [isCreateContractOpen, setIsCreateContractOpen] = useState(false);
 
+  // Demo Console State
+  const [isDemoConsoleOpen, setIsDemoConsoleOpen] = useState(false);
+  const [demoConsoleTab, setDemoConsoleTab] = useState<'api' | 'webhooks' | 'wallets'>('api');
+  const [wallets, setWallets] = useState<DemoWalletState | null>(null);
+
   // Toast notification
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'warning' } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'info' | 'warning' = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 5000);
+  };
+
+  const handleOpenConsole = (tab: 'api' | 'webhooks' | 'wallets' = 'api') => {
+    setDemoConsoleTab(tab);
+    setIsDemoConsoleOpen(true);
+  };
+
+  // Fetch demo console data (wallets, telemetry)
+  const loadConsoleData = async () => {
+    try {
+      const res = await fetch('/api/demo-console');
+      const data = await res.json();
+      if (data.success && data.wallets) {
+        setWallets(data.wallets);
+      }
+    } catch (err) {
+      console.error('Failed to load demo console state:', err);
+    }
   };
 
   // Fetch all contracts on load
@@ -52,6 +76,7 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false);
     }
+    await loadConsoleData();
   };
 
   useEffect(() => {
@@ -160,6 +185,8 @@ export default function Dashboard() {
       <Navbar
         onNewContract={() => setIsCreateContractOpen(true)}
         onResetDemo={handleResetDemo}
+        onOpenDemoConsole={handleOpenConsole}
+        wallets={wallets}
         isResetting={isResetting}
       />
 
@@ -184,7 +211,10 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         
         {/* Judge Interactive Quick Tour */}
-        <GuidedDemoTour onTriggerStep={handleTriggerTourStep} />
+        <GuidedDemoTour 
+          onTriggerStep={handleTriggerTourStep} 
+          onOpenConsole={() => handleOpenConsole('api')}
+        />
 
         {/* Multi-Contract Switcher (if multiple exist) */}
         {contracts.length > 1 && (
@@ -238,6 +268,13 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center gap-4 text-[11px]">
+                <button
+                  onClick={() => handleOpenConsole('api')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold transition"
+                >
+                  <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Open Sandbox Console</span>
+                </button>
                 <span className="font-mono bg-slate-100 px-2.5 py-1 rounded-md text-slate-700">Next.js 14 + AG Grid + Render</span>
                 <span className="font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md">PayPal Sandbox Connected</span>
               </div>
@@ -265,6 +302,7 @@ export default function Dashboard() {
         contract={activeContract}
         onClose={() => setFundingMilestone(null)}
         onSuccess={handleFundSuccess}
+        onOpenConsole={() => handleOpenConsole('api')}
       />
 
       <EvidenceSubmissionModal
@@ -285,6 +323,7 @@ export default function Dashboard() {
           setAuditMilestone(null);
           setInvoiceMilestone(m);
         }}
+        onOpenConsole={() => handleOpenConsole('api')}
         isProcessing={isProcessing}
       />
 
@@ -303,6 +342,13 @@ export default function Dashboard() {
           setSelectedContractId(newContract.id);
           showToast(`Agreement created: ${newContract.title}`, 'success');
         }}
+      />
+
+      {/* VeriPay Sandbox Demo Console (Raw API Inspector, Webhooks Stream, Simulated Wallets) */}
+      <SandboxDemoConsole
+        isOpen={isDemoConsoleOpen}
+        onClose={() => setIsDemoConsoleOpen(false)}
+        defaultTab={demoConsoleTab}
       />
     </div>
   );
